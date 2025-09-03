@@ -1,26 +1,28 @@
 return {
   "sphamba/smear-cursor.nvim",
-
   opts = {
-    stiffnes = 0.5,
-    trailing_stiffness = 0.49,
-    never_draw_over_target = false,
-    -- Smear cursor when switching buffers or windows.
-    smear_between_buffers = true,
-
-    -- Smear cursor when moving within line or to neighbor lines.
-    -- Use `min_horizontal_distance_smear` and `min_vertical_distance_smear` for finer control
+    -- 關掉容易造成誇張拖影的行為
+    smear_between_buffers = false,
     smear_between_neighbor_lines = false,
+    scroll_buffer_space = false,
+    smear_insert_mode = false,
 
-    -- Draw the smear in buffer space instead of screen space when scrolling
-    scroll_buffer_space = true,
+    -- 不改變顏色（用目標文字色），更不顯眼
+    cursor_color = "none",
 
-    -- Set to `true` if your font supports legacy computing symbols (block unicode symbols).
-    -- Smears will blend better on all backgrounds.
-    legacy_computing_symbols_support = false,
+    -- 「平滑但無拖尾」的建議值
+    stiffness = 0.5,                 -- ← 你原本打成 stiffnes（少一個 s）
+    trailing_stiffness = 0.5,
+    stiffness_insert_mode = 0.5,
+    trailing_stiffness_insert_mode = 0.5,
+    matrix_pixel_threshold = 0.5,
 
-    -- Smear cursor in insert mode.
-    -- See also `vertical_bar_cursor_insert_mode` and `distance_stop_animating_vertical_bar`.
-    smear_insert_mode = true,
+    -- 盡快停止動畫
+    damping = 0.95,
+    damping_insert_mode = 0.95,
+    distance_stop_animating = 0.1,
+
+    -- 避免游標重影（必要時再開）
+    hide_target_hack = true,
   },
 }
