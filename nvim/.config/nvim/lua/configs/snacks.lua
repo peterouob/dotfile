@@ -5,25 +5,15 @@ require("snacks").setup {
     formatters = { icon_width = 3 },
     win = { input = { keys = { ["<Esc>"] = { "close", mode = { "n", "i" } } } } },
 
-    -- 這裡才是控制是否顯示隱藏檔/是否忽略 .gitignore 的位置
-    sources = {
-      files = {
-        hidden = true,    -- 顯示 .dotfiles
-        ignored = true,  -- 不套用 .gitignore
-        follow = true,    -- 可選：跟隨 symlink
-      },
-      grep = {
-        hidden = true,
-        ignored = true,
-      },
+ sources = {
+      explorer = { hidden = true, ignored = false, follow = true },
+      files    = { hidden = true, ignored = false, follow = true },
+      grep     = { hidden = true, ignored = false },
     },
   },
 
   explorer = {
     enabled = true,
-    hidden = true,     -- 檔案總管顯示隱藏檔
-    ignored = true,   -- 檔案總管不忽略 .gitignore
-    -- replace_netrw = true, -- 需要時再開
   },
   notifier = { enabled = false },
   scroll = { enabled = true },
@@ -126,7 +116,7 @@ require("snacks").setup {
     -- end,
   },
   indent = {
-    enabled = false,
+    enabled = true,
     indent = { enabled = false },
     animate = { duration = { step = 10, duration = 100 } },
     scope = { enabled = true, char = "┊", underline = false, only_current = true, priority = 1000 },
