@@ -1,6 +1,5 @@
 return {
-  {
-    "MeanderingProgrammer/render-markdown.nvim",
+  { "MeanderingProgrammer/render-markdown.nvim",
     lazy = false,
     ft = { "markdown", "Avante" },
     config = function()

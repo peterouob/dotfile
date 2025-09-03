@@ -1,38 +1,66 @@
 ---@diagnostic disable: missing-fields
-require('snacks').setup {
-  notifier = {},
-  picker = {
+require("snacks").setup {
+    picker = {
     matcher = { frecency = true, cwd_bonus = true, history_bonus = true },
     formatters = { icon_width = 3 },
-    win = { input = { keys = { ['<Esc>'] = { 'close', mode = { 'n', 'i' } } } } },
-  },
-  dashboard = {
-  width = 60,
-  row = nil, -- dashboard position. nil for center
-  col = nil, -- dashboard position. nil for center
-  pane_gap = 4, -- empty columns between vertical panes
-  autokeys = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", -- autokey sequence
-  -- These settings are used by some built-in sections
-  preset = {
-    -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
-    ---@type fun(cmd:string, opts:table)|nil
-    pick = nil,
-    -- Used by the `keys` section to show keymaps.
-    -- Set your custom keymaps here.
-    -- When using a function, the `items` argument are the default keymaps.
-    ---@type snacks.dashboard.Item[]
-    keys = {
-      { icon = " ", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
-      { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
-      { icon = " ", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },
-      { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
-      { icon = " ", key = "c", desc = "Config", action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
-      { icon = " ", key = "s", desc = "Restore Session", section = "session" },
-      { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
-      { icon = " ", key = "q", desc = "Quit", action = ":qa" },
+    win = { input = { keys = { ["<Esc>"] = { "close", mode = { "n", "i" } } } } },
+
+    -- 這裡才是控制是否顯示隱藏檔/是否忽略 .gitignore 的位置
+    sources = {
+      files = {
+        hidden = true,    -- 顯示 .dotfiles
+        ignored = true,  -- 不套用 .gitignore
+        follow = true,    -- 可選：跟隨 symlink
+      },
+      grep = {
+        hidden = true,
+        ignored = true,
+      },
     },
-    -- Used by the `header` section
-    header = [[
+  },
+
+  explorer = {
+    enabled = true,
+    hidden = true,     -- 檔案總管顯示隱藏檔
+    ignored = true,   -- 檔案總管不忽略 .gitignore
+    -- replace_netrw = true, -- 需要時再開
+  },
+  notifier = { enabled = false },
+  scroll = { enabled = true },
+  words = { enabled = true },
+  dashboard = {
+    enabled = true,
+    width = 60,
+    row = nil, -- dashboard position. nil for center
+    col = nil, -- dashboard position. nil for center
+    pane_gap = 4, -- empty columns between vertical panes
+    autokeys = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", -- autokey sequence
+    -- These settings are used by some built-in sections
+    preset = {
+      -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
+      ---@type fun(cmd:string, opts:table)|nil
+      pick = nil,
+      -- Used by the `keys` section to show keymaps.
+      -- Set your custom keymaps here.
+      -- When using a function, the `items` argument are the default keymaps.
+      ---@type snacks.dashboard.Item[]
+      keys = {
+        { icon = " ", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
+        { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
+        { icon = " ", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },
+        { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
+        {
+          icon = " ",
+          key = "c",
+          desc = "Config",
+          action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})",
+        },
+        { icon = " ", key = "s", desc = "Restore Session", section = "session" },
+        { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+        { icon = " ", key = "q", desc = "Quit", action = ":qa" },
+      },
+      -- Used by the `header` section
+      header = [[
 ██████╗ ███████╗████████╗███████╗██████╗ 
 ██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
 ██████╔╝█████╗     ██║   █████╗  ██████╔╝
@@ -40,37 +68,37 @@ require('snacks').setup {
 ██║     ███████╗   ██║   ███████╗██║  ██║
 ╚═╝     ╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 ]],
-  },
-  -- item field formatters
-  formats = {
-    icon = function(item)
-      if item.file and item.icon == "file" or item.icon == "directory" then
-        return M.icon(item.file, item.icon)
-      end
-      return { item.icon, width = 2, hl = "icon" }
-    end,
-    footer = { "%s", align = "center" },
-    header = { "%s", align = "center" },
-    file = function(item, ctx)
-      local fname = vim.fn.fnamemodify(item.file, ":~")
-      fname = ctx.width and #fname > ctx.width and vim.fn.pathshorten(fname) or fname
-      if #fname > ctx.width then
-        local dir = vim.fn.fnamemodify(fname, ":h")
-        local file = vim.fn.fnamemodify(fname, ":t")
-        if dir and file then
-          file = file:sub(-(ctx.width - #dir - 2))
-          fname = dir .. "/…" .. file
+    },
+    -- item field formatters
+    formats = {
+      icon = function(item)
+        if item.file and item.icon == "file" or item.icon == "directory" then
+          return M.icon(item.file, item.icon)
         end
-      end
-      local dir, file = fname:match("^(.*)/(.+)$")
-      return dir and { { dir .. "/", hl = "dir" }, { file, hl = "file" } } or { { fname, hl = "file" } }
-    end,
-  },
-  sections = {
-    { section = "header" },
-    { section = "keys", gap = 1, padding = 1 },
-    { section = "startup" },
-  },
+        return { item.icon, width = 2, hl = "icon" }
+      end,
+      footer = { "%s", align = "center" },
+      header = { "%s", align = "center" },
+      file = function(item, ctx)
+        local fname = vim.fn.fnamemodify(item.file, ":~")
+        fname = ctx.width and #fname > ctx.width and vim.fn.pathshorten(fname) or fname
+        if #fname > ctx.width then
+          local dir = vim.fn.fnamemodify(fname, ":h")
+          local file = vim.fn.fnamemodify(fname, ":t")
+          if dir and file then
+            file = file:sub(-(ctx.width - #dir - 2))
+            fname = dir .. "/…" .. file
+          end
+        end
+        local dir, file = fname:match "^(.*)/(.+)$"
+        return dir and { { dir .. "/", hl = "dir" }, { file, hl = "file" } } or { { fname, hl = "file" } }
+      end,
+    },
+    sections = {
+      { section = "header" },
+      { section = "keys", gap = 1, padding = 1 },
+      { section = "startup" },
+    },
   },
   image = {
     enabled = true,
@@ -101,18 +129,18 @@ require('snacks').setup {
     enabled = false,
     indent = { enabled = false },
     animate = { duration = { step = 10, duration = 100 } },
-    scope = { enabled = true, char = '┊', underline = false, only_current = true, priority = 1000 },
+    scope = { enabled = true, char = "┊", underline = false, only_current = true, priority = 1000 },
   },
   styles = {
     snacks_image = {
-      border = 'rounded',
+      border = "rounded",
       backdrop = false,
     },
   },
-  -- statuscolumn = {
-  --   left = { 'mark', 'git' },
-  --   right = {},
-  --   folds = { open = true, git_hl = true },
-  --   git = { patterns = { 'GitSign', 'MiniDiffSign' } },
-  -- },
+   statuscolumn = {
+     left = { 'mark', 'git' },
+     right = {},
+     folds = { open = true, git_hl = true },
+     git = { patterns = { 'GitSign', 'MiniDiffSign' } },
+   },
 }

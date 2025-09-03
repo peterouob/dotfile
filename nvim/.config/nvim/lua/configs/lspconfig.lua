@@ -5,12 +5,23 @@ local lspconfig = require "lspconfig"
 local servers = { "html", "cssls" }
 local nvlsp = require "nvchad.configs.lspconfig"
 local base = require "nvchad.configs.lspconfig"
+local capabilities = {
+  textDocument = {
+    foldingRange = {
+      dynamicRegistration = false,
+      lineFoldingOnly = true
+    }
+  }
+}
+
+capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
+
 -- lsps with default config
 for _, lsp in ipairs(servers) do
   lspconfig[lsp].setup {
     on_attach = nvlsp.on_attach,
     on_init = nvlsp.on_init,
-    capabilities = nvlsp.capabilities,
+    capabilities = capabilities,
   }
 end
 
@@ -37,17 +48,17 @@ lspconfig.clangd.setup {
   cmd = { "clangd", "--background-index", "--clang-tidy", "--completion-style=detailed", "--header-insertion=iwyu" },
   filetypes = { "c", "cpp", "c++" },
   root_dir = require("lspconfig.util").root_pattern("compile_commands.json", ".git"),
-  capabilities = require("cmp_nvim_lsp").default_capabilities(),
+  capabilities = capabilities,
 }
 
 lspconfig.ts_ls.setup {
   on_attach = base.on_attach,
-  capabilities = base.capabilities,
+  capabilities = capabilities,
 }
 
 lspconfig.tailwindcss.setup {
   on_attach = base.on_attach,
-  capabilities = base.capabilities,
+  capabilities = capabilities,
 }
 
 lspconfig.pylsp.setup {
@@ -65,7 +76,7 @@ lspconfig.pylsp.setup {
 
 lspconfig.lua_ls.setup {
   on_attach = base.on_attach,
-  capabilities = base.capabilities,
+  capabilities = capabilities,
 
   -- 👇 避免 LSP 把整個 home 當專案 root
   root_dir = function(fname)
