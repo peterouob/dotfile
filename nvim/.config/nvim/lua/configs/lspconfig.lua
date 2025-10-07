@@ -1,111 +1,119 @@
--- load defaults i.e lua_lsp
+-- NVChad 既有預設（仍可保留，主要是 on_attach / on_init 等）
 require("nvchad.configs.lspconfig").defaults()
-local lspconfig = require "lspconfig"
--- EXAMPLE
-local servers = { "html", "cssls" }
+
 local nvlsp = require "nvchad.configs.lspconfig"
-local base = require "nvchad.configs.lspconfig"
+local base  = require "nvchad.configs.lspconfig"
+
+-- capabilities：沿用你的 foldingRange 與 blink.cmp
 local capabilities = {
   textDocument = {
-    foldingRange = {
-      dynamicRegistration = false,
-      lineFoldingOnly = true
-    }
-  }
+    foldingRange = { dynamicRegistration = false, lineFoldingOnly = true },
+  },
 }
+capabilities = require("blink.cmp").get_lsp_capabilities(capabilities)
 
-capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
+-- 一次宣告想啟用的伺服器（會在下方統一 enable）
+local simple_servers = { "html", "cssls", "ts_ls", "tailwindcss", "pylsp" }
 
--- lsps with default config
-for _, lsp in ipairs(servers) do
-  lspconfig[lsp].setup {
-    on_attach = nvlsp.on_attach,
-    on_init = nvlsp.on_init,
+-- 1) 先覆寫/擴充各伺服器的設定（新 API）
+for _, name in ipairs(simple_servers) do
+  vim.lsp.config(name, {
+    on_attach    = base.on_attach,
+    on_init      = nvlsp.on_init,
     capabilities = capabilities,
-  }
+    -- 需要額外自訂時再加，例如 filetypes / settings / root_markers
+  })
 end
 
-lspconfig.gopls.setup {
-  cmd = { "gopls" },
-  filetypes = { "go", "gomod" },
-  root_dir = require("lspconfig").util.root_pattern("go.mod", ".git"),
+-- gopls：對應你原本的設定
+vim.lsp.config("gopls", {
+  on_attach    = nvlsp.on_attach,
+  on_init      = nvlsp.on_init,
+  capabilities = capabilities,
+  filetypes    = { "go", "gomod" },
+  -- root_markers 取代傳統 root_dir 寫法；也可保留 root_dir 函式
+  root_markers = { "go.mod", ".git" },
   settings = {
     gopls = {
-      analyses = {
-        unusedparams = true,
-      },
+      analyses = { unusedparams = true },
       staticcheck = true,
       gofumpt = true,
       usePlaceholders = true,
-      completeUnimported = true, -- 自動導入未使用的 package
+      completeUnimported = true,
       semanticTokens = true,
-      directoryFilters = { "-node_modules" }, -- 避免載入 node_modules
-      expandWorkspaceToModule = true, -- 允許模組內跳轉
+      directoryFilters = { "-node_modules" },
+      expandWorkspaceToModule = true,
     },
   },
-}
-lspconfig.clangd.setup {
-  cmd = { "clangd", "--background-index", "--clang-tidy", "--completion-style=detailed", "--header-insertion=iwyu" },
+})
+
+-- clangd：等價你原本的參數
+vim.lsp.config("clangd", {
+  on_attach    = base.on_attach,
+  on_init      = nvlsp.on_init,
+  capabilities = capabilities,
+  cmd = {
+    "clangd",
+    "--background-index",
+    "--clang-tidy",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu",
+  },
   filetypes = { "c", "cpp", "c++" },
-  root_dir = require("lspconfig.util").root_pattern("compile_commands.json", ".git"),
-  capabilities = capabilities,
-}
+  -- 若需要嚴格根目錄規則，也可用 root_markers = { "compile_commands.json", ".git" }
+})
 
-lspconfig.ts_ls.setup {
-  on_attach = base.on_attach,
+-- pylsp：關閉 pycodestyle / mccabe，開啟 pyflakes / yapf
+vim.lsp.config("pylsp", {
+  on_attach    = base.on_attach,
+  on_init      = nvlsp.on_init,
   capabilities = capabilities,
-}
-
-lspconfig.tailwindcss.setup {
-  on_attach = base.on_attach,
-  capabilities = capabilities,
-}
-
-lspconfig.pylsp.setup {
   settings = {
     pylsp = {
       plugins = {
-        pycodestyle = { enabled = false }, -- 禁用 pycodestyle（避免與 flake8 衝突）
-        mccabe = { enabled = false }, -- 禁用代碼複雜度檢查
-        pyflakes = { enabled = true }, -- 啟用 Pyflakes
-        yapf = { enabled = true }, -- 啟用自動格式化
+        pycodestyle = { enabled = false },
+        mccabe      = { enabled = false },
+        pyflakes    = { enabled = true  },
+        yapf        = { enabled = true  },
       },
     },
   },
-}
+})
 
-lspconfig.lua_ls.setup {
-  on_attach = base.on_attach,
+-- lua_ls：避免把 $HOME 誤當成專案 root，並保留你的 workspace/diagnostics
+vim.lsp.config("lua_ls", {
+  on_attach    = base.on_attach,
+  on_init      = nvlsp.on_init,
   capabilities = capabilities,
 
-  -- 👇 避免 LSP 把整個 home 當專案 root
+  -- 仍可使用 root_dir 函式（新 API 也支援）
   root_dir = function(fname)
-    local util = require "lspconfig.util"
+    local util = require("lspconfig.util")
     local root = util.root_pattern(".git", ".luarc.json", "init.lua")(fname)
     if root == vim.loop.os_homedir() then
-      return nil -- 返回 nil 會讓 LSP 不啟用
+      return nil
     end
     return root
   end,
 
   settings = {
     Lua = {
-      runtime = {
-        version = "LuaJIT",
-      },
-      diagnostics = {
-        globals = { "vim" },
-      },
+      runtime = { version = "LuaJIT" },
+      diagnostics = { globals = { "vim" } },
       workspace = {
         checkThirdParty = false,
         library = {
           vim.env.VIMRUNTIME,
-          vim.fn.stdpath "config" .. "/lua",
+          vim.fn.stdpath("config") .. "/lua",
         },
       },
-      telemetry = {
-        enable = false,
-      },
+      telemetry = { enable = false },
     },
   },
-}
+})
+
+-- 2) 啟用所有定義好的設定（新 API）
+for _, name in ipairs(vim.tbl_flatten({ simple_servers, { "gopls", "clangd", "lua_ls" } })) do
+  vim.lsp.enable(name)
+end
+

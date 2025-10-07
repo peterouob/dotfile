@@ -3,6 +3,9 @@ return {
   {
     "stevearc/conform.nvim",
     event = "BufWritePre", -- 可解鎖自動格式化
+    config = function ()
+      require("configs.conform")
+    end
   },
 
   -- LSP 設定

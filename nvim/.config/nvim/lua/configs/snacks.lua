@@ -13,7 +13,7 @@ require("snacks").setup {
   },
 
   explorer = {
-    enabled = true,
+    enabled = false,
   },
   notifier = { enabled = false },
   scroll = { enabled = true },

@@ -1,34 +1,20 @@
-require('modes').setup({
-	colors = {
-		bg = "", -- Optional bg param, defaults to Normal hl group
-		copy = "#f5c359",
-		delete = "#c75c6a",
-		change = "#c75c6a", -- Optional param, defaults to delete
-		format = "#c79585",
-		insert = "#78ccc5",
-		replace = "#78ccc5",
-		select = "#FFB6C1", -- Optional param, defaults to visual
-		visual = "#FFB6C1",
-	},
-
-	-- Set opacity for cursorline and number background
-	line_opacity = 0.15,
-
-	-- Enable cursor highlights
-	set_cursor = true,
-
-	-- Enable cursorline initially, and disable cursorline for inactive windows
-	-- or ignored filetypes
-	set_cursorline = true,
-
-	-- Enable line number highlights to match cursorline
-	set_number = true,
-
-	-- Enable sign column highlights to match cursorline
-	set_signcolumn = true,
-
-	-- Disable modes highlights for specified filetypes
-	-- or enable with prefix "!" if otherwise disabled (please PR common patterns)
-	-- Can also be a function fun():boolean that disables modes highlights when true
-	ignore = { 'NvimTree', 'TelescopePrompt', '!minifiles' }
+require("modes").setup({
+  colors = {
+    bg     = "#FFF9FB",     -- 若想跟 Normal 一樣，也可留空字串
+    copy   = "#F5C359",   -- 柔黃：複製
+    delete = "#E16B8A",   -- 粉紅偏紅：刪除
+    change = "#E69AAE",   -- 比 delete 淡一點：編輯/變更
+    format = "#E9A6AF",   -- 排版/格式
+    replace= "#86D7CF",   -- 取代用溫和青綠，與粉系不打架
+    select = "#FFB6C1", -- 你指定的 #FFB6C1
+    visual = "#FFB6C1",
+  },
+  line_opacity   = 0.18,
+  set_cursor     = true,
+  set_cursorline = true,
+  set_number     = true,
+  set_signcolumn = true,
+  -- 可視需要忽略某些面板，避免過度上色
+  -- ignore = { "TelescopePrompt", "NvimTree" },
+  --
 })

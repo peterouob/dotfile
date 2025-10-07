@@ -1,1 +1,1 @@
-return { 'fladson/vim-kitty', ft = 'kitty', tag = 'v1.1' }
+return { 'fladson/vim-kitty',lazy=false, ft = 'kitty', tag = 'v1.1' }
