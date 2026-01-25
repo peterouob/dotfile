@@ -1,98 +1,58 @@
 return {
-    "xzbdmw/colorful-menu.nvim",
-    lazy = false,
-    config = function()
-        -- You don't need to set these options.
-        require("colorful-menu").setup({
-            ls = {
-                lua_ls = {
-                    -- Maybe you want to dim arguments a bit.
-                    arguments_hl = "@comment",
-                },
-                gopls = {
-                    -- By default, we render variable/function's type in the right most side,
-                    -- to make them not to crowd together with the original label.
+  "xzbdmw/colorful-menu.nvim",
+  event = "InsertEnter", -- 優化：只有進入插入模式時才載入
+  config = function()
+    require("colorful-menu").setup({
+      ls = {
+        -- 1. Lua 設定
+        lua_ls = {
+          -- 讓參數顯示稍微暗一點，避免搶了函式名的風頭
+          arguments_hl = "@comment",
+        },
 
-                    -- when true:
-                    -- foo             *Foo
-                    -- ast         "go/ast"
+        -- 2. Golang 設定 (重點)
+        gopls = {
+          -- 將型別對齊到最右側 (e.g., "foo        *Foo")，視覺更整潔
+          align_type_to_right = true,
+          -- Go 語法習慣不加冒號，保持原汁原味
+          add_colon_before_type = false,
+          -- 即使選單寬度不夠，也優先保留型別資訊
+          preserve_type_when_truncate = true,
+        },
 
-                    -- when false:
-                    -- foo *Foo
-                    -- ast "go/ast"
-                    align_type_to_right = true,
-                    -- When true, label for field and variable will format like "foo: Foo"
-                    -- instead of go's original syntax "foo Foo". If align_type_to_right is
-                    -- true, this option has no effect.
-                    add_colon_before_type = false,
-                    -- See https://github.com/xzbdmw/colorful-menu.nvim/pull/36
-                    preserve_type_when_truncate = true,
-                },
-                -- for lsp_config or typescript-tools
-                ts_ls = {
-                    -- false means do not include any extra info,
-                    -- see https://github.com/xzbdmw/colorful-menu.nvim/issues/42
-                    extra_info_hl = "@comment",
-                },
-                vtsls = {
-                    -- false means do not include any extra info,
-                    -- see https://github.com/xzbdmw/colorful-menu.nvim/issues/42
-                    extra_info_hl = "@comment",
-                },
-                ["rust-analyzer"] = {
-                    -- Such as (as Iterator), (use std::io).
-                    extra_info_hl = "@comment",
-                    -- Similar to the same setting of gopls.
-                    align_type_to_right = true,
-                    -- See https://github.com/xzbdmw/colorful-menu.nvim/pull/36
-                    preserve_type_when_truncate = true,
-                },
-                clangd = {
-                    -- Such as "From <stdio.h>".
-                    extra_info_hl = "@comment",
-                    -- Similar to the same setting of gopls.
-                    align_type_to_right = true,
-                    -- the hl group of leading dot of "•std::filesystem::permissions(..)"
-                    import_dot_hl = "@comment",
-                    -- See https://github.com/xzbdmw/colorful-menu.nvim/pull/36
-                    preserve_type_when_truncate = true,
-                },
-                zls = {
-                    -- Similar to the same setting of gopls.
-                    align_type_to_right = true,
-                },
-                roslyn = {
-                    extra_info_hl = "@comment",
-                },
-                dartls = {
-                    extra_info_hl = "@comment",
-                },
-                -- The same applies to pyright/pylance
-                basedpyright = {
-                    -- It is usually import path such as "os"
-                    extra_info_hl = "@comment",
-                },
-                pylsp = {
-                    extra_info_hl = "@comment",
-                    -- Dim the function argument area, which is the main
-                    -- difference with pyright.
-                    arguments_hl = "@comment",
-                },
-                -- If true, try to highlight "not supported" languages.
-                fallback = true,
-                -- this will be applied to label description for unsupport languages
-                fallback_extra_info_hl = "@comment",
-            },
-            -- If the built-in logic fails to find a suitable highlight group for a label,
-            -- this highlight is applied to the label.
-            fallback_highlight = "@variable",
-            -- If provided, the plugin truncates the final displayed text to
-            -- this width (measured in display cells). Any highlights that extend
-            -- beyond the truncation point are ignored. When set to a float
-            -- between 0 and 1, it'll be treated as percentage of the width of
-            -- the window: math.floor(max_width * vim.api.nvim_win_get_width(0))
-            -- Default 60.
-            max_width = 60,
-        })
-    end,
+        -- 3. Rust 設定 (重點)
+        ["rust-analyzer"] = {
+          align_type_to_right = true,
+          -- 把像是 (as Iterator) 這種額外資訊變暗，減少視覺干擾
+          extra_info_hl = "@comment",
+          preserve_type_when_truncate = true,
+        },
+
+        -- 4. C/C++ 設定
+        clangd = {
+          align_type_to_right = true,
+          extra_info_hl = "@comment",
+          -- 讓 import 的點 (•std::...) 變暗
+          import_dot_hl = "@comment",
+          preserve_type_when_truncate = true,
+        },
+
+        -- 5. 其他語言 (Python, TypeScript, Zig, etc.)
+        basedpyright = { extra_info_hl = "@comment" },
+        vtsls = { extra_info_hl = "@comment" },
+        ts_ls = { extra_info_hl = "@comment" },
+        zls = { align_type_to_right = true },
+        
+        -- 對於未支援的語言，嘗試 fallback
+        fallback = true,
+        fallback_extra_info_hl = "@comment",
+      },
+
+      -- 若無法判定 highlight group，預設使用的顏色
+      fallback_highlight = "@variable",
+      
+      -- 限制最大寬度 (字元數或百分比 0-1)
+      max_width = 60,
+    })
+  end,
 }

@@ -6,14 +6,10 @@ local map = vim.keymap.set
 
 map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>")
-map("n", "<leader>e",function()
-  require("snacks").explorer()
-end, {desc = "open file explorer "})
 map('n', '<leader>v',
     ":lua if vim.fn.match(vim.fn.expand('%:e'), 'mp4\\|mkv\\|avi\\|mov') >= 0 then vim.fn.system('mpv ' .. vim.fn.expand('%:p') .. ' &') else print('Not a video file') end<CR>",
     { noremap = true, silent = true }
 )
-
 map("n", "gd", vim.lsp.buf.definition, { noremap = true, silent = true })
 -- Keyboard users
 map("n", "<C-t>", function()

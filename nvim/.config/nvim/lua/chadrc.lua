@@ -6,21 +6,20 @@
 local M = {}
 
 M.base46 = {
-	theme = "ayu_dark",
-
+	theme = "material-deep-ocean",
+  transparency = true,
 	 hl_override = {
 	 	Comment = { italic = true },
 	 	["@comment"] = { italic = true },
 	 },
 }
+
  M.nvdash = { load_on_startup = false }
  M.ui = {
-       tabufline = {
+     tabufline = {
+       order = { "treeOffset", "buffers", "tabs" },
           lazyload = false
       },
-  nvdash = {
-      load_on_startup = false,  -- 設定為 false 禁用 Dashboard
-   },
 }
 
 return M

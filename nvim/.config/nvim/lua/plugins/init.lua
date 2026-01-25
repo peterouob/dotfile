@@ -3,12 +3,10 @@ return {
   {
     "stevearc/conform.nvim",
     event = "BufWritePre", -- 可解鎖自動格式化
-    config = function ()
+    config = function()
       require("configs.conform")
     end
   },
-
-  -- LSP 設定
   {
     "neovim/nvim-lspconfig",
     config = function()
@@ -44,13 +42,6 @@ return {
     opts = {},
   },
 
-  --Markdown 支持（MDX）
-  {
-    "davidmh/mdx.nvim",
-    dependencies = { "nvim-treesitter/nvim-treesitter" },
-    config = true,
-    lazy = false,
-  },
 
   -- Rustaceanvim
   {
@@ -88,13 +79,6 @@ return {
     end,
   },
 
-  -- LSP 進度指示
-  {
-    "j-hui/fidget.nvim",
-    lazy = false,
-    opts = {},
-  },
-
   -- 問題檢視
   {
     "folke/trouble.nvim",
@@ -104,17 +88,17 @@ return {
   },
 
   -- Markdown 預覽
---  {
---    "iamcco/markdown-preview.nvim",
---    lazy = false,
---    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
---    build = "cd app && yarn install",
---    init = function()
---      vim.g.mkdp_filetypes = { "markdown" }
---    end,
---    ft = { "markdown" },
---  },
---
+  --  {
+  --    "iamcco/markdown-preview.nvim",
+  --    lazy = false,
+  --    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+  --    build = "cd app && yarn install",
+  --    init = function()
+  --      vim.g.mkdp_filetypes = { "markdown" }
+  --    end,
+  --    ft = { "markdown" },
+  --  },
+  --
   -- 調試支持
   {
     "mfussenegger/nvim-dap",
@@ -138,8 +122,8 @@ return {
     "pteroctopus/faster.nvim",
     lazy = false,
   },
-  { "nvzone/volt", lazy = false },
-  { "nvzone/menu", lazy = false },
+  { "nvzone/volt",          lazy = false },
+  { "nvzone/menu",          lazy = false },
   {
     "ibhagwan/fzf-lua",
     lazy = false,

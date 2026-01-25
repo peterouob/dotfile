@@ -1,38 +1,44 @@
--- NVChad 既有預設（仍可保留，主要是 on_attach / on_init 等）
-require("nvchad.configs.lspconfig").defaults()
+local nvlsp = require("nvchad.configs.lspconfig")
 
-local nvlsp = require "nvchad.configs.lspconfig"
-local base  = require "nvchad.configs.lspconfig"
-
--- capabilities：沿用你的 foldingRange 與 blink.cmp
-local capabilities = {
-  textDocument = {
-    foldingRange = { dynamicRegistration = false, lineFoldingOnly = true },
-  },
+-- 1. 準備 Capabilities (包含 Blink.cmp)
+local capabilities = nvlsp.capabilities
+capabilities.textDocument.foldingRange = {
+  dynamicRegistration = false,
+  lineFoldingOnly = true,
 }
+-- 整合 Blink
 capabilities = require("blink.cmp").get_lsp_capabilities(capabilities)
 
--- 一次宣告想啟用的伺服器（會在下方統一 enable）
-local simple_servers = { "html", "cssls", "ts_ls", "tailwindcss", "pylsp" }
+-- 2. 定義共用設定 (On Attach / On Init)
+local defaults = {
+  on_attach = nvlsp.on_attach,
+  on_init = nvlsp.on_init,
+  capabilities = capabilities,
+}
 
--- 1) 先覆寫/擴充各伺服器的設定（新 API）
-for _, name in ipairs(simple_servers) do
-  vim.lsp.config(name, {
-    on_attach    = base.on_attach,
-    on_init      = nvlsp.on_init,
-    capabilities = capabilities,
-    -- 需要額外自訂時再加，例如 filetypes / settings / root_markers
-  })
+-- 3. 定義輔助函數：註冊並啟用伺服器
+-- 這是 Neovim 0.11 的標準寫法
+local function setup_server(name, config)
+  -- 合併預設值與客製化設定
+  local final_config = vim.tbl_deep_extend("force", defaults, config or {})
+  
+  -- A. 定義設定 (Config)
+  vim.lsp.config(name, final_config)
+  
+  -- B. 啟用伺服器 (Enable)
+  vim.lsp.enable(name)
 end
 
--- gopls：對應你原本的設定
-vim.lsp.config("gopls", {
-  on_attach    = nvlsp.on_attach,
-  on_init      = nvlsp.on_init,
-  capabilities = capabilities,
-  filetypes    = { "go", "gomod" },
-  -- root_markers 取代傳統 root_dir 寫法；也可保留 root_dir 函式
-  root_markers = { "go.mod", ".git" },
+-- =================================================================
+-- 4. 伺服器配置區
+-- =================================================================
+
+-- [Golang] gopls
+setup_server("gopls", {
+  cmd = { "gopls" },
+  filetypes = { "go", "gomod", "gowork", "gotmpl" },
+  -- 0.11 使用 root_markers 取代 root_dir
+  root_markers = { "go.work", "go.mod", ".git" },
   settings = {
     gopls = {
       analyses = { unusedparams = true },
@@ -41,17 +47,12 @@ vim.lsp.config("gopls", {
       usePlaceholders = true,
       completeUnimported = true,
       semanticTokens = true,
-      directoryFilters = { "-node_modules" },
-      expandWorkspaceToModule = true,
     },
   },
 })
 
--- clangd：等價你原本的參數
-vim.lsp.config("clangd", {
-  on_attach    = base.on_attach,
-  on_init      = nvlsp.on_init,
-  capabilities = capabilities,
+-- [C/C++] clangd
+setup_server("clangd", {
   cmd = {
     "clangd",
     "--background-index",
@@ -59,61 +60,55 @@ vim.lsp.config("clangd", {
     "--completion-style=detailed",
     "--header-insertion=iwyu",
   },
-  filetypes = { "c", "cpp", "c++" },
-  -- 若需要嚴格根目錄規則，也可用 root_markers = { "compile_commands.json", ".git" }
+  filetypes = { "c", "cpp", "objc", "objcpp" },
+  root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
 })
 
--- pylsp：關閉 pycodestyle / mccabe，開啟 pyflakes / yapf
-vim.lsp.config("pylsp", {
-  on_attach    = base.on_attach,
-  on_init      = nvlsp.on_init,
-  capabilities = capabilities,
+-- [Python] pylsp
+setup_server("pylsp", {
+  cmd = { "pylsp" },
   settings = {
     pylsp = {
       plugins = {
         pycodestyle = { enabled = false },
-        mccabe      = { enabled = false },
-        pyflakes    = { enabled = true  },
-        yapf        = { enabled = true  },
+        mccabe = { enabled = false },
+        pyflakes = { enabled = true },
+        yapf = { enabled = true },
       },
     },
   },
 })
 
--- lua_ls：避免把 $HOME 誤當成專案 root，並保留你的 workspace/diagnostics
-vim.lsp.config("lua_ls", {
-  on_attach    = base.on_attach,
-  on_init      = nvlsp.on_init,
-  capabilities = capabilities,
-
-  -- 仍可使用 root_dir 函式（新 API 也支援）
-  root_dir = function(fname)
-    local util = require("lspconfig.util")
-    local root = util.root_pattern(".git", ".luarc.json", "init.lua")(fname)
-    if root == vim.loop.os_homedir() then
-      return nil
-    end
-    return root
-  end,
-
+-- [Lua] lua_ls
+setup_server("lua_ls", {
+  cmd = { "lua-language-server" },
+  root_markers = { ".luarc.json", ".stylua.toml", "stylua.toml", ".git" },
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },
       diagnostics = { globals = { "vim" } },
       workspace = {
         checkThirdParty = false,
-        library = {
-          vim.env.VIMRUNTIME,
-          vim.fn.stdpath("config") .. "/lua",
-        },
+        library = { vim.env.VIMRUNTIME },
       },
       telemetry = { enable = false },
     },
   },
 })
 
--- 2) 啟用所有定義好的設定（新 API）
-for _, name in ipairs(vim.tbl_flatten({ simple_servers, { "gopls", "clangd", "lua_ls" } })) do
-  vim.lsp.enable(name)
-end
+-- [Assembly] asm_lsp
+setup_server("asm_lsp", {
+  -- Mason 安裝後 binary 名稱為 "asm-lsp"
+  cmd = { "asm-lsp" },
+  filetypes = { "asm", "vmasm", "s", "S" },
+  -- 0.11 原生寫法：定義如何找到專案根目錄
+  -- 建議加入 .asm-lsp.toml，這是官方推薦的專案標記檔
+  root_markers = { ".asm-lsp.toml", ".git" },
+})
 
+-- [Web] HTML / CSS / TS / Tailwind
+-- 這裡直接給定指令，確保穩定啟動
+setup_server("html", { cmd = { "vscode-html-language-server", "--stdio" } })
+setup_server("cssls", { cmd = { "vscode-css-language-server", "--stdio" } })
+setup_server("ts_ls", { cmd = { "typescript-language-server", "--stdio" } })
+setup_server("tailwindcss", { cmd = { "tailwindcss-language-server", "--stdio" } })
