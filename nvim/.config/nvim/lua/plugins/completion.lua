@@ -78,7 +78,7 @@ return {
         
         -- 按 Enter 選擇並接受
         ["<CR>"] = { "select_and_accept", "fallback" },
-        
+        ["<Esc>"] = {"cancel", "fallback"}
         -- 若你習慣 Tab 鍵選下一個，可以取消註解下方這行：
         -- ["<Tab>"] = { "select_next", "fallback" },
         -- ["<S-Tab>"] = { "select_prev", "fallback" },

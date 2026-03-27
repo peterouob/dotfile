@@ -1,13 +1,20 @@
 local nvlsp = require("nvchad.configs.lspconfig")
 
--- 1. 準備 Capabilities (包含 Blink.cmp)
+-- 1. 準備基本的 Capabilities
 local capabilities = nvlsp.capabilities
 capabilities.textDocument.foldingRange = {
   dynamicRegistration = false,
   lineFoldingOnly = true,
 }
--- 整合 Blink
-capabilities = require("blink.cmp").get_lsp_capabilities(capabilities)
+
+-- 建立心理韌性：輕柔地試探 Blink 是否存在，不強求
+-- 使用 pcall 就像是「受保護的探詢」，即使找不到也不會引發恐慌
+local is_blink_ready, blink = pcall(require, "blink.cmp")
+
+if is_blink_ready then
+  -- 如果夥伴在場，我們就愉快地整合
+  capabilities = blink.get_lsp_capabilities(capabilities)
+end
 
 -- 2. 定義共用設定 (On Attach / On Init)
 local defaults = {
@@ -17,27 +24,19 @@ local defaults = {
 }
 
 -- 3. 定義輔助函數：註冊並啟用伺服器
--- 這是 Neovim 0.11 的標準寫法
 local function setup_server(name, config)
-  -- 合併預設值與客製化設定
   local final_config = vim.tbl_deep_extend("force", defaults, config or {})
-  
-  -- A. 定義設定 (Config)
   vim.lsp.config(name, final_config)
-  
-  -- B. 啟用伺服器 (Enable)
   vim.lsp.enable(name)
 end
 
 -- =================================================================
--- 4. 伺服器配置區
+-- 4. 伺服器配置區 (保持你原本優秀的設定)
 -- =================================================================
 
--- [Golang] gopls
 setup_server("gopls", {
   cmd = { "gopls" },
   filetypes = { "go", "gomod", "gowork", "gotmpl" },
-  -- 0.11 使用 root_markers 取代 root_dir
   root_markers = { "go.work", "go.mod", ".git" },
   settings = {
     gopls = {
@@ -51,7 +50,6 @@ setup_server("gopls", {
   },
 })
 
--- [C/C++] clangd
 setup_server("clangd", {
   cmd = {
     "clangd",
@@ -64,7 +62,6 @@ setup_server("clangd", {
   root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
 })
 
--- [Python] pylsp
 setup_server("pylsp", {
   cmd = { "pylsp" },
   settings = {
@@ -79,7 +76,6 @@ setup_server("pylsp", {
   },
 })
 
--- [Lua] lua_ls
 setup_server("lua_ls", {
   cmd = { "lua-language-server" },
   root_markers = { ".luarc.json", ".stylua.toml", "stylua.toml", ".git" },
@@ -96,18 +92,6 @@ setup_server("lua_ls", {
   },
 })
 
--- [Assembly] asm_lsp
-setup_server("asm_lsp", {
-  -- Mason 安裝後 binary 名稱為 "asm-lsp"
-  cmd = { "asm-lsp" },
-  filetypes = { "asm", "vmasm", "s", "S" },
-  -- 0.11 原生寫法：定義如何找到專案根目錄
-  -- 建議加入 .asm-lsp.toml，這是官方推薦的專案標記檔
-  root_markers = { ".asm-lsp.toml", ".git" },
-})
-
--- [Web] HTML / CSS / TS / Tailwind
--- 這裡直接給定指令，確保穩定啟動
 setup_server("html", { cmd = { "vscode-html-language-server", "--stdio" } })
 setup_server("cssls", { cmd = { "vscode-css-language-server", "--stdio" } })
 setup_server("ts_ls", { cmd = { "typescript-language-server", "--stdio" } })
